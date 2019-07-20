@@ -3,33 +3,9 @@ import { View, StyleSheet, Dimensions, Text, FlatList } from 'react-native';
 import { TabView, SceneMap } from 'react-native-tab-view';
 import Image from '../components/Image'
 import Api from '../providers/client'
-import { stringify } from 'qs';
-
-const IssuesRoute = () => (
-    <View style={[styles.scene]} />
-  );
+import { Card } from 'react-native-elements';
   
-  const PullRequestRoute = () => (
-    <View style={[styles.scene]} />
-  );
-  
-  const CommitRoute = () => (
-      <View style={[styles.scene]}>
-      <FlatList
-          data={[]}
-          ListEmptyComponent={<Text>Não há Commits</Text>}
-          keyExtractor={(item) => item.node_id}
-          renderItem={({item}) => 
-          <View key={item.node_id}>
-          <Card title={item.commit.author.name} >
-              <Text>{item.commit.message}</Text>
-          </Card>
-          </View>} />
-      </View>
-    );
-
 class Detail extends Component {
-
   state = {
     index: 0,
     routes: [
@@ -42,54 +18,139 @@ class Detail extends Component {
     repo: '',
 
     issues: [],
-    pullRequest: [],
+    pulls: [],
     commits: []
     
   };
 
  async componentDidMount(){
 
-    const user = {"avatar_url": "https://avatars2.githubusercontent.com/u/16567302?v=4"}
-    const repo = {"full_name": "gabrielborchardt/ApiLocadora", "stargazers_count": 0}
+    const user = this.props.navigation.state.params.user 
+    const repo = this.props.navigation.state.params.repo
 
     await this.setState({ 
         user,
         repo 
     })    
 
-    this.loadCommits()
- }
+    await this.changeTab(this.state.index)
+}
 
-
-//   async componentDidMount () { 
-    
-//         const user = this.props.navigation.state.params.user 
-//         const repo = this.props.navigation.state.params.repo
-        
-//         this.setState({ 
-//                 user,
-//                 repo 
-//         })
-    
-//         this.loadIssues()
-//     }
-
-    async loadIssues(){
-        const issues = await Api.get('/repos/' + this.state.repo.full_name + '/issues')
+    changeTab = async (index) => {
         this.setState({  
-            issues
+            index
+        })
+
+        switch (index) {
+            case 0:
+                await this.loadIssues()
+                break;
+            case 1:
+                await this.loadPulls()
+                    break;
+            case 2:
+                await this.loadCommits()
+                break;                            
+            default:
+                break;
+        }
+
+        console.log('index: ' + index)
+    }
+
+    loadIssues = async () => {
+        const response = await Api.get('repos/' + this.state.repo.full_name + '/issues')
+        this.setState({  
+            issues: response.data
         })
     }
 
-    async loadCommits(){
-        let commits = await Api.get('repos/' + this.state.repo.full_name + '/commits')
-        console.log('commits: ' + JSON.stringify(commits))
+    loadPulls = async () => {
+        const response = await Api.get('repos/' + this.state.repo.full_name + '/pulls')
         this.setState({  
-            commits
+            pulls: response.data
+        })
+    }
+
+    loadCommits = async () => {
+        const response = await Api.get('repos/' + this.state.repo.full_name + '/commits')
+        this.setState({  
+            commits: response.data
         })        
     }    
-        
-  render() {
+
+    IssuesRoute = () => {
+        return(
+            <View style={[styles.scene]}>
+            <FlatList
+                data={this.state.issues}
+                ListEmptyComponent={<Text>Não há Pulls</Text>}
+                keyExtractor={(item) => item.node_id}
+                renderItem={({item}) => {
+                    return (<View key={item.node_id}>
+                        <Card title={item.user.login} >
+                            <Text>{item.title}</Text>
+                        </Card>
+                    </View>)
+                }
+                } />
+            </View>
+            )
+    }
+      
+    PullRequestRoute = () => {
+        return(
+            <View style={[styles.scene]}>
+            <FlatList
+                data={this.state.pulls}
+                ListEmptyComponent={<Text>Não há Pulls</Text>}
+                keyExtractor={(item) => item.node_id}
+                renderItem={({item}) => {
+                    return (<View key={item.node_id}>
+                        <Card title={item.user.login} >
+                            <Text>{item.title}</Text>
+                        </Card>
+                    </View>)
+                }
+                } />
+            </View>
+            )
+    }
+
+    CommitRoute = () => {
+        return(
+            <View style={[styles.scene]}>
+            <FlatList
+                data={this.state.commits}
+                ListEmptyComponent={<Text>Não há Commits</Text>}
+                keyExtractor={(item) => item.node_id}
+                renderItem={({item}) => {
+                    return (<View key={item.node_id}>
+                        <Card title={item.commit.author.name} >
+                            <Text>{item.commit.message}</Text>
+                        </Card>
+                    </View>)
+                }
+                } />
+            </View>
+            )
+    }
+
+    renderScene = ({ route }) => {
+        switch (route.key) {
+          case 'issues':
+            return this.IssuesRoute()
+          case 'pullrequest':
+            return this.PullRequestRoute()
+          case 'commit':
+            return this.CommitRoute()
+          default:
+            return null;
+        }
+      }
+
+  render = () => {
+    console.log('RENDER')
     return (
        
         <>
@@ -106,12 +167,8 @@ class Detail extends Component {
 
         <TabView
                 navigationState={this.state}
-                renderScene={SceneMap({
-                    issues: IssuesRoute,
-                    pullrequest: PullRequestRoute,
-                    commit: CommitRoute
-                })}
-                onIndexChange={index => this.setState({ index })}
+                renderScene={this.renderScene}
+                onIndexChange={index => this.changeTab(index)}
                 initialLayout={{ width: Dimensions.get('window').width }}
             />
       </>
