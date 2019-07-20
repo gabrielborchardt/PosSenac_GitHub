@@ -35,11 +35,16 @@ class Detail extends Component {
             user = this.props.navigation.state.params.user,
             repo  = this.props.navigation.state.params.repo,
         })
+
+        this.loadIssues()
+
     }
 
     async loadIssues(){
         const issues = await Api.get('/repos/' + this.state.full_name + '/' + this.state.repo + '/issues')
-
+        this.setState({  
+            issues
+        })
     }
 
   render() {
