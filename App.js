@@ -9,13 +9,13 @@ const Root = createStackNavigator({
   Home: {
     screen: Home,
     navigationOptions: {
-        header: null
+      title: "BUSCAR REPOSITÓRIOS"
     }
   }, 
   Details : {
     screen: Details,
     navigationOptions: { 
-        header: null
+      title: "USUÁRIO"
     } 
   },     
 })
