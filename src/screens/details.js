@@ -1,10 +1,12 @@
 import React, { Component } from 'react'
 import { View, StyleSheet, Dimensions, Text, FlatList } from 'react-native';
-import { TabView, SceneMap } from 'react-native-tab-view';
+import { TabView } from 'react-native-tab-view';
 import Image from '../components/Image'
 import Api from '../providers/client'
 import { Card } from 'react-native-elements';
-  
+import styled from 'styled-components';
+import Icon from 'react-native-vector-icons/FontAwesome';
+
 class Detail extends Component {
   state = {
     index: 0,
@@ -14,7 +16,6 @@ class Detail extends Component {
       { key: 'commit', title: 'COMMMIT' },
     ],
 
-    user: '',
     repo: '',
 
     issues: [],
@@ -25,12 +26,10 @@ class Detail extends Component {
 
  async componentDidMount(){
 
-    const user = this.props.navigation.state.params.user 
-    const repo = this.props.navigation.state.params.repo
+    let repo = await this.props.navigation.state.params.repo
 
     await this.setState({ 
-        user,
-        repo 
+        repo
     })    
 
     await this.changeTab(this.state.index)
@@ -54,8 +53,6 @@ class Detail extends Component {
             default:
                 break;
         }
-
-        console.log('index: ' + index)
     }
 
     loadIssues = async () => {
@@ -84,8 +81,8 @@ class Detail extends Component {
             <View style={[styles.scene]}>
             <FlatList
                 data={this.state.issues}
-                ListEmptyComponent={<Text>Não há Pulls</Text>}
-                keyExtractor={(item) => item.node_id}
+                ListEmptyComponent={<Text>Não há Issues</Text>}
+                keyExtractor={(item) => item.node_id+ ''}
                 renderItem={({item}) => {
                     return (<View key={item.node_id}>
                         <Card title={item.user.login} >
@@ -104,7 +101,7 @@ class Detail extends Component {
             <FlatList
                 data={this.state.pulls}
                 ListEmptyComponent={<Text>Não há Pulls</Text>}
-                keyExtractor={(item) => item.node_id}
+                keyExtractor={(item) => item.node_id+ ''}
                 renderItem={({item}) => {
                     return (<View key={item.node_id}>
                         <Card title={item.user.login} >
@@ -123,7 +120,7 @@ class Detail extends Component {
             <FlatList
                 data={this.state.commits}
                 ListEmptyComponent={<Text>Não há Commits</Text>}
-                keyExtractor={(item) => item.node_id}
+                keyExtractor={(item) => item.node_id+ ''}
                 renderItem={({item}) => {
                     return (<View key={item.node_id}>
                         <Card title={item.commit.author.name} >
@@ -150,18 +147,23 @@ class Detail extends Component {
       }
 
   render = () => {
-    console.log('RENDER')
     return (
        
         <>
         
         <View style={styles.container}>
-        
-            <Image source={{uri: this.state.user.avatar_url}} />
+
+            {
+                (this.state.repo)
+                ?  <Image source={{uri: this.state.repo.owner.avatar_url}} />
+                :  <AI size="large" color='#fff'/>
+            }
 
             <Text style={[styles.text]}>{this.state.repo.full_name}</Text>
 
-            <Text style={[styles.text]}>{this.state.repo.stargazers_count}</Text>
+            <View style={styles.header}>
+                <Text style={[styles.text]}>{this.state.repo.stargazers_count} <Icon name="star" size={20} color="#c9b428" /></Text>
+            </View>
 
         </View>
 
@@ -190,7 +192,14 @@ const styles = StyleSheet.create({
     scene: {
         flex: 1,
     },
+    header:{
+        flexDirection: 'row',
+        justifyContent: 'space-between'
+    },
 });
+
+const AI = styled.ActivityIndicator`
+`
 
 
 export default Detail

@@ -1,8 +1,9 @@
 import React, { Component} from 'react';
-import { StyleSheet, Text, View, FlatList } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
 import { Card } from 'react-native-elements';
 import api from '../providers/client'
 import Input from '../components/Input'
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 export default class App extends Component {
   
@@ -33,6 +34,11 @@ export default class App extends Component {
 
     await this.search()
   }
+
+  handleOnPress = (repo) => {
+    
+    this.props.navigation.navigate('Details', { repo })
+  }
  
 render() {
     return (
@@ -48,13 +54,19 @@ render() {
       <FlatList
         data={this.state.userRepositorios}
         ListEmptyComponent={<Text>Não há Repositorios Castradas</Text>}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id + ''}
         renderItem={({item}) => 
         <View key={item.id}>
-          <Card title={item.full_name} >
-            <Text>{item.description}</Text>
-            <Text>{item.stargazers_count}</Text>
-          </Card>
+
+          <TouchableOpacity onPress={() => this.handleOnPress(item)}>
+            <Card>
+                <View style={styles.header}>
+                  <Text style={styles.textBold}>{item.full_name}</Text>
+                  <Text>{item.stargazers_count} <Icon name="star" size={20} color="#c9b428" /></Text>
+                </View>
+                <Text>{item.description}</Text>
+            </Card>
+          </TouchableOpacity>
         </View>} />
     </View>
  )};
@@ -74,5 +86,12 @@ const styles = StyleSheet.create({
    alignSelf: 'flex-start',
    marginTop: 10,
    marginLeft: 35
+ },
+header:{
+  flexDirection: 'row',
+  justifyContent: 'space-between'
+ },
+ textBold:{
+  fontWeight: "bold"
  }
 });
